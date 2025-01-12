@@ -11,7 +11,7 @@
       <div class="login-header">
         <header>Login</header>
       </div>
-      <form action="#" method="POST">
+      <form action="#" method="POST" id="login-form">
         
         <div class="input-box" id="role-select-box">
             <select id="user-type" class="input-field" onchange="changeForm()">
@@ -93,6 +93,40 @@
               eyeIcon.textContent = "🙈";      
           }
       }
+
+        document.getElementById('login-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const userType = document.getElementById('user-type').value;    
+            let url='http://localhost:3000/user/';
+            if(userType==='Admin'){
+                url='http://localhost:3000/admin/'
+            }
+            const response = await fetch(url+'login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password,role:userType })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                console.log('Login successful:', data);
+                localStorage.setItem('token', data.token);
+                if (userType === 'admin') {
+                    localStorage.setItem('admin', true);
+                    window.location.href = '/adminhome.html';
+                }
+                window.location.href = '../index.html';
+            } else {
+                console.error('Login failed:', data);
+                window.alert('Login failed. Please try again.');
+            }
+        });
    </script>
 </body>
 </html>

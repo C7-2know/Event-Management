@@ -19,6 +19,7 @@ export class AdminController {
       return { message: 'Invalid credentials' };
     }
     const token = await this.authService.generateToken(admin);
+    
     return { token };
   }
 

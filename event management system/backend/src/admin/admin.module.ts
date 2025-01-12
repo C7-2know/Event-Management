@@ -7,7 +7,7 @@ import { AuthService } from './auth/auth.service';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './auth/jwt.strategy';
-import { Admin, AdminSchema } from './schemas/admin.schema';
+import { Admin, AdminSchema } from './schemas/Admin.schema';
 
 @Module({
   imports: [

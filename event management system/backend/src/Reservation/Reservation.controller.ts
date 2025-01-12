@@ -1,15 +1,25 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, UseGuards } from '@nestjs/common';
-import { ReservationService } from './reservation.service';
+import { Controller, Get, Post, Put, Delete, Param, Body, UseGuards,Headers } from '@nestjs/common';
+import { ReservationService } from './Reservation.service';
 import { CreateReservationDto, UpdateReservationDto } from './dto/reservation.dto';
 import { JwtAuthGuard } from '../admin/auth/guards/jwt-auth.guard';
+import { AuthService } from 'src/admin/auth/auth.service';
 
 @Controller('reservations')
 export class ReservationController {
-  constructor(private readonly reservationService: ReservationService) {}
+  constructor(private readonly reservationService: ReservationService,
+    private readonly authService: AuthService
+  ) {}
+  
 
   @UseGuards(JwtAuthGuard)
   @Post()
-  create(@Body() createReservationDto: CreateReservationDto) {
+  async create(@Body() createReservationDto: CreateReservationDto, @Headers('authorization') authHeader: string) {
+    const user = await this.authService.decodeToken(authHeader.split(' ')[1]);
+    console.log("decoded user", user);
+    if (!user){
+      return "Unauthorized";
+    }
+    createReservationDto.userId = user.sub;
     return this.reservationService.create(createReservationDto);
   }
 
