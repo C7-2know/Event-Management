@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin-dashboard</title>
+    <link rel="stylesheet" href="../CSS/admin.css" />
+    <style>
+      button {
+        margin: 30px;
+        background-color: rgb(29, 29, 86);
+        padding-top: 0px;
+        padding-bottom: 0px;
+        margin-top: 6vh;
+        border-radius: 3px;
+        color: white;
+        margin-left: 30px;
+      }
+      button a {
+        color: white;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="admin-dashboard">
+      <header class="admin-header">
+        <p>Event Management System</p>
+        <nav>
+          <ul>
+            <li><a class="current" href="adminhome.html">Home</a></li>
+            <li><a class="current1" href="adminDashebord.html">Dashboard</a></li>
+          </ul>
+        </nav>
+        <div class="logout">
+          <button><a href="../home.html">Logout</a></button>
+        </div>
+      </header>
+      <hr />
+
+      <div class="main-content">
+        <section id="dashboard">
+          <h2>Dashboard Overview</h2>
+          <div class="stats-cards">
+            <div class="card">Total Events: 120</div>
+            <div class="card">Total Users: 500</div>
+            <div class="card">Reservations: 300</div>
+          </div>
+        </section>
+        <section id="events">
+          <h2>Manage Events</h2>
+          <button id="addEventBtn">Add New Event</button>
+          <table>
+            <thead>
+              <tr>
+                <th>Event Name</th>
+                <th>Organizer</th>
+                <th>Date</th>
+                <th>Category</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="eventTableBody">
+              <!-- Events will be injected here by JavaScript -->
+            </tbody>
+          </table>
+        </section>
+      </div>
+    </div>
+
+    <!-- Modal for Creating Event -->
+    <div id="eventModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <form id="eventForm">
+          <h2>Create New Event</h2>
+          <label for="eventName">Event Name:</label>
+          <input type="text" id="eventName" name="eventName" required />
+
+          <label for="organizer">Organizer:</label>
+          <input type="text" id="organizer" name="organizer" required />
+
+          <label for="eventDate">Event Date:</label>
+          <input type="date" id="eventDate" name="eventDate" required />
+
+          <label for="eventTime">Event Time:</label>
+          <input type="time" id="eventTime" name="eventTime" required />
+
+          <label for="category">Category:</label>
+          <select id="category" name="category" required>
+            <option value="">Select a category</option>
+            <option value="Business">Business Events</option>
+            <option value="Music">Music Events</option>
+            <option value="Conference">Conference</option>
+            <option value="Festival">Festivals</option>
+          </select>
+
+          <label for="eventImage">Event Image:</label>
+          <input type="file" id="eventImage" name="eventImage" accept="image/*" />
+
+          <button type="submit">Create Event</button>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      // Fetch events from the backend
+      fetch('http://localhost:3000/events')  // Replace with your backend endpoint for events
+        .then(response => response.json())
+        .then(events => {
+          const eventTableBody = document.getElementById('eventTableBody');
+          eventTableBody.innerHTML = '';  // Clear existing table rows
+
+          events.forEach(event => {
+            const row = `
+              <tr>
+                <td>${event.title}</td>
+                <td>${event.organizer}</td>
+                <td>${event.date}</td>
+                <td>${event.category}</td>
+                <td>
+                  <button class="edit-btn" data-id="${event._id}">Edit</button> |
+                  <button class="delete-btn" data-id="${event._id}">Delete</button>
+                </td>
+              </tr>
+            `;
+            eventTableBody.innerHTML += row;
+          });
+        })
+        .catch(error => console.error('Error fetching events:', error));
+
+      // Event delegation to handle delete buttons
+      document.getElementById('eventTableBody').addEventListener('click', function (event) {
+        if (event.target.classList.contains('delete-btn')) {
+          const eventId = event.target.getAttribute('data-id');
+          
+          // Send DELETE request to remove the event
+          fetch(`http://localhost:3000/events/${eventId}`, {
+            method: 'DELETE',
+          })
+            .then(response => response.json())
+            .then(() => {
+              alert('Event deleted');
+              location.reload();  // Reload the page to update the event list
+            })
+            .catch(error => console.error('Error deleting event:', error));
+        }
+      });
+
+      // Handle event form submission for creating new event
+      document.getElementById('eventForm').addEventListener('submit', function (e) {
+        e.preventDefault();  // Prevent form submission
+
+        const title = document.getElementById('eventName').value;  // Title for the event
+        const description = '';  // Set a default empty value for description if it's not in the form
+        const date = document.getElementById('eventDate').value;  // Date from the form
+        const category = document.getElementById('category').value;  // Category from the form
+        const organizer = document.getElementById('organizer').value;  // Organizer from the form
+        const eventImage = document.getElementById('eventImage').files[0];  // Image file
+
+        // Check if all required fields are filled
+        if (!title || !category || !organizer || !date) {
+          alert('Please fill in all fields');
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append('title', title);
+        formData.append('description', description);  // Send empty string if description is not provided
+        formData.append('date', date);
+        formData.append('category', category);
+        formData.append('organizer', organizer);
+
+        // Only append the image if it's selected
+        if (eventImage) {
+          formData.append('image', eventImage);
+        }
+
+        // Send POST request to create a new event
+        fetch('http://localhost:3000/events', {
+          method: 'POST',
+          body: formData,
+        })
+          .then(response => response.json())
+          .then(() => {
+            alert('Event created');
+            document.getElementById('eventModal').style.display = 'none';  // Close modal
+            location.reload();  // Reload the page to display the new event
+          })
+          .catch(error => {
+            console.error('Error creating event:', error);
+            alert('Error creating event');
+          });
+      });
+
+      // Open modal for creating event
+      document.getElementById('addEventBtn').addEventListener('click', function () {
+        document.getElementById('eventModal').style.display = 'block';
+      });
+
+      // Close modal
+      document.querySelector('.close').addEventListener('click', function () {
+        document.getElementById('eventModal').style.display = 'none';
+      });
+    </script>
+  </body>
+</html>
